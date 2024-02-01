@@ -51,6 +51,56 @@ def decode(preds, chars):
     return labels, pred_labels
 
 
+def convert_logits_to_probabilities(logits):
+    # Apply softmax to convert logits to probabilities
+    probabilities = np.exp(logits) / torch.sum(np.exp(logits), axis=0)
+    return probabilities
+
+
+def decode_with_confidence(preds, chars, threshold=0.98):
+    """
+    Authored by Can Nguyen. https://github.com/cannguyen275
+    This function will decode each timestep of OCR logit and accept high confidence timestep only.
+    :param preds: (batch_size, num_classes, timestep). This is logit output of OCR model.
+    :param chars: vocabulary.
+    :param threshold: confidence threshold, timestep has lower confidence then threshold will be ignored.
+    :return: decoded text, raw decoded text. Use decoded text as final result.
+    """
+    # greedy decode with confidence scores and probabilities
+    pred_labels = []
+    confidences = []
+
+    for i in range(preds.shape[0]):
+        pred = preds[i, :, :]
+        pred_label = []
+        confidence = []
+
+        for j in range(pred.shape[1]):
+            max_index = np.argmax(pred[:, j], axis=0)
+            prob = convert_logits_to_probabilities(pred[:, j])[max_index]
+            if prob > threshold:
+                pred_label.append(max_index)
+                confidence.append(prob.numpy())
+
+        no_repeat_blank_label = []
+        pre_c = ''
+
+        for c in pred_label:  # dropout repeated label and blank label
+            if (pre_c == c) or (c == len(chars) - 1):
+                if c == len(chars) - 1:
+                    pre_c = c
+                continue
+            no_repeat_blank_label.append(c)
+            pre_c = c
+
+        pred_labels.append(no_repeat_blank_label)
+        confidences.append(confidence)
+
+    labels = [''.join([chars[i] for i in label]) for label in pred_labels]
+
+    return labels, pred_labels
+
+
 def accuracy(logits, labels, lengths, chars):
     preds = logits.cpu().detach().numpy()
     _, pred_labels = decode(preds, chars)

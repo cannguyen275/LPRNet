@@ -230,7 +230,7 @@ class LPRNet(L.LightningModule):
 
         logits = self(imgs)
         preds = logits.cpu().detach().numpy()  # (batch size, 68, 18)
-        predict, _ = decode(preds, self.chars)  # list of predict output
+        predict, _ = decode_with_confidence(preds, self.chars)  # list of predict output
 
         return predict
 

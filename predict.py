@@ -13,7 +13,7 @@ from imutils import paths
 from rich.progress import track
 from sklearn.metrics import accuracy_score
 
-from lprnet import LPRNet, numpy2tensor, decode
+from lprnet import LPRNet, numpy2tensor, decode_with_confidence
 
 warnings.filterwarnings("ignore")
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
         t0 = time.time()
         logit = lprnet(im).detach().to('cpu')
-        pred, _ = decode(logit, args.chars)
+        pred, _ = decode_with_confidence(logit, args.chars, threshold=0.98)  # Loose threshold to capture more characters
         t1 = time.time()
         print("Predicted: {} \t Label: {}".format(pred, labels[i]))
         times.append(t1 - t0)
