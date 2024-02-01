@@ -58,7 +58,8 @@ if __name__ == "__main__":
         accelerator="auto",
         # amp_backend="apex",
         devices=1,
-        logger=WandbLogger(project="LPRNet-IDN"),
+        # logger=WandbLogger(project="LPRNet-IDN"),
+        logger=True
     )
 
     # Train

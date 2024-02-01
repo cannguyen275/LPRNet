@@ -111,10 +111,6 @@ class LPRNetDataset(Dataset):
         imgname = imgname.split("-")[0].split("_")[0]
         label = encode(imgname, self.args.chars)
 
-        if label:
-            if not self.check(label):
-                assert 0, f"{imgname} <- Error label ^~^!!!"
-
         return Image, label, len(label)
 
     def transform(self, img):
@@ -124,15 +120,6 @@ class LPRNetDataset(Dataset):
         img = np.transpose(img, (2, 0, 1))
 
         return img
-
-    def check(self, label):
-        # kor_plate_pattern = re.compile('[가-힣]{0,5}[0-9]{0,3}[가-힣][0-9]{4}')
-        idn_plate_pattern = re.compile("[A-Z]{0,3}[0-9]{0,4}[A-Z]{0,3}")
-        plate_name = idn_plate_pattern.findall(
-            "".join([self.args.chars[c] for c in label])
-        )
-
-        return True if plate_name else False
 
 
 class DataModule(L.LightningDataModule):

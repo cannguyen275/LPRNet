@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import lightning as L
 
-from lprnet.utils import decode, accuracy
+from lprnet.utils import decode_with_confidence, accuracy
 
 
 def sparse_tuple_for_ctc(t_length, lengths):
@@ -143,13 +143,14 @@ class LPRNet(L.LightningModule):
     def __init__(self, args: Optional[Namespace] = None):
         super().__init__()
         self.save_hyperparameters(args)
-        self.STNet = _STNet()
+        #  self.STNet = _STNet()  # This model not quantization supported yet
         self.LPRNet = _LPRNet(
             class_num=len(self.hparams.chars), dropout_rate=self.hparams.dropout_rate
         )
 
     def forward(self, x):
-        return self.LPRNet(self.STNet(x))
+        #  return self.LPRNet(self.STNet(x))
+        return self.LPRNet(x)
 
     def training_step(self, batch, batch_idx):
         # training_step defines the train loop. It is independent of forward
@@ -247,6 +248,11 @@ class LPRNet(L.LightningModule):
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
             optimizer, 10, 2, 0.0001, -1
         )
+        # scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        #     optimizer,
+        #     milestones=[100, 120, 150],  # Adjust these milestone epochs as needed
+        #     gamma=0.1,  # Adjust the gamma factor as needed
+        # )
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
